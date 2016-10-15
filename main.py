@@ -1,6 +1,24 @@
+#!/usr/bin/python
+
 import time
 import os
+import os.path as path
 import transmissionrpc
+import datetime
+
+# Watch directories
+watch_tv = ''
+watch_movie = ''
+watch_music = ''
+
+# Complete download directories
+download_dir_tv = ''
+download_dir_movie = ''
+download_dir_music = ''
+
+delete = True # Currently you will receive errors in the log if you do not remove the torrent file - it'll be picked up the next
+              # time the script loops and will try and add the torrent again. Transmission will throw an exception because it's
+              # already added.
 
 client = transmissionrpc.Client(
     address='',
@@ -9,30 +27,25 @@ client = transmissionrpc.Client(
     password=''
     )
 
-watch_tv = ''
-watch_movie = ''
-download_dir_tv = ''
-download_dir_movie = ''
-backup_dir = 'remove'
-
-
-def add(watch_dir, download_dir, after):
-    watch_dir = os.listdir(watch_tv)
-    if watch_dir != []:
-        for i in watch_dir:
-            if i.lower().endswith('.torrent'):
+def add(watch_dir, download_dir):
+    directory = os.listdir(watch_dir)
+    files = next(os.walk(watch_dir))[2]
+    if files: # files exist in directory
+        for file in files:
+            if file.lower().endswith('.torrent') and not file.lower().startswith('.'):
                 try:
-                    client.add_torrent(watch_tv + '/' + i, download_dir=download_dir)
+                    print '[{:%Y-%m-%d %H:%M:%S}]'.format(datetime.datetime.now()), "Adding torrent:", file
+                    newTorrent = client.add_torrent(watch_dir + '/' + file, download_dir=download_dir)
                     time.sleep(1)
-                    if after == 'remove':
-                        os.remove(watch_tv + '/' + i)
-                    else:
-                        os.rename(watch_tv + '/' + i, after + '/' + i)
-                except:
-                    print 'Unexpected error'
+                    newTorrent.start()
+                    if delete: os.remove(watch_dir + '/' + file)
+                except Exception, e:
+                    print '[{:%Y-%m-%d %H:%M:%S}]'.format(datetime.datetime.now()), "Error encountered:", str(e)
                 time.sleep(1)
 
 while True:
-    add(watch_tv, download_dir_tv, backup_dir)
-    add(watch_movie, download_dir_movie, backup_dir)
+    print '[{:%Y-%m-%d %H:%M:%S}]'.format(datetime.datetime.now()), "Searching directories."
+    add(watch_tv, download_dir_tv)
+    add(watch_movie, download_dir_movie)
+    add(watch_music, download_dir_music)
     time.sleep(60)
