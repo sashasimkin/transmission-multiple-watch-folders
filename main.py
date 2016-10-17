@@ -43,19 +43,19 @@ def add(watch_dir, download_dir):
     if files: # files exist in directory
         for file in files:
             if file.lower().endswith('.torrent') and not file.lower().startswith('.'):
-            log = open('./log.txt', 'a')
-            timestamp = '[{:%Y-%m-%d %H:%M:%S}]'.format(datetime.datetime.now())
+                log = open('./log.txt', 'a')
+                timestamp = '[{:%Y-%m-%d %H:%M:%S}]'.format(datetime.datetime.now())
 
                 try:
-            print >> log, timestamp + ' ' + 'Adding torrent: ' + file
+                    print >> log, timestamp + ' ' + 'Adding torrent: ' + file
                     newTorrent = client.add_torrent(watch_dir + '/' + file, download_dir=download_dir)
                     time.sleep(1)
                     newTorrent.start()
                     os.remove(watch_dir + '/' + file)
                 except Exception, e:
-            print >> log, timestamp + ' ' + 'Error encountered: ' + str(e)
-
-        log.close()
+                      print >> log, timestamp + ' ' + 'Error encountered: ' + str(e)
+                      
+                log.close()
                 time.sleep(1)
 
 while True:
