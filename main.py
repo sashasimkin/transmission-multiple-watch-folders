@@ -54,7 +54,7 @@ def add(watch_dir, download_dir):
                     os.remove(watch_dir + '/' + file)
                 except Exception, e:
                       print >> log, timestamp + ' ' + 'Error encountered: ' + str(e)
-                      
+
                 log.close()
                 time.sleep(1)
 
@@ -65,4 +65,5 @@ while True:
     add(watch_tv, download_dir_tv)
     add(watch_movie, download_dir_movie)
     add(watch_music, download_dir_music)
+    log.close()
     time.sleep(60)
