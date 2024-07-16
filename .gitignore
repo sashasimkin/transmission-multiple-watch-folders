@@ -1,6 +1,9 @@
 .gitattributes
+*.egg-info
+build/
 *.sublime-project
 *.sublime-workspace
 log.txt
 *.pyc
 .DS_Store
+venv/

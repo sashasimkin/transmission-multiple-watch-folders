@@ -1,0 +1,13 @@
+[Unit]
+Description=Watch directory for torrent files and add to Transmission
+After=network.target
+
+[Service]
+Type=simple
+Environment=TRANSMISSION_RPC_PASSWORD=your_password
+ExecStart=/home/your_username/transmission-watch-env/bin/python /home/your_username/watch_torrents.py --watch-dir /path/to/watch/folder --download-basedir /path/to/base/download/dir
+WorkingDirectory=/home/your_username
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

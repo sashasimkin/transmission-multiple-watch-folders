@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transmission-dir-watcher"
+version = "0.1.0"
+description = "A script to watch a directory for torrent files and add them to Transmission."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Oleksandr Simkin", email = "sashasimkin@gmail.com"},
+]
+dependencies = [
+    "transmission-rpc~=7.0.10",
+]
+
+[project.scripts]
+transmission-dir-watcher = "transmission_dir_watcher.main:main"

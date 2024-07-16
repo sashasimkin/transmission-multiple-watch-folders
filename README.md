@@ -1,45 +1,113 @@
-## Transmission Watch Folders
-A small Python script which provides a way to automate multiple watch directories when using `TransmissionDaemon`, a CLI version of the popular Transmission torrent client.
+# Transmission Dir Watcher
 
-The script runs in the background and searches the specified watch directories for torrent files, every 1 minute by default.
+This script watches a specified directory for new `.torrent` files and adds them to Transmission for downloading. The download directory is determined based on the folder structure of the watched directory.
 
-### Getting Started
+This means that when you use this script to watch directory `./torrents` which has the following structure:
+```
+- torrents/
+  - Movies/
+  - TVShows/
+    - Anime/
+  - Audio/
+```
+and configure download to `/media/`(basedir).
 
-#### Prerequisites
-* `Python 2.7`
-* `pip` package manager
-* The ability to run the script on the same server as the transmission daemon
+When you upload a `.torrent` file to `./torrents/Movies/` - the script will add it to transmission to download to `/media/Movies/`.
+When you upload a `.torrent` file to `./torrents/TVShows/Anime/` - the script will add it to transmission to download to `/media/TVShows/Anime/`.
+When you upload a `.torrent` file to `./torrents` - the script will add it to transmission to download to `/media/`.
 
-#### Installing
-First we need to install the `transmissionrpc` library dependency.
+When script successfully adds a `.torrent` file to transmission, it'll delete it from the `--watch-dir` directory.
+If adding fails for 5 times, the file will be renamed to `{name}.failed` and additional `{name}.traceback` will be created with last error.
 
-		pip install transmissionrpc
+## Purpose
 
-Clone this repository and copy `main.py` and `startup.sh` to a directory where they can live permanently. Then make the startup script executable with:
+The purpose of this script is to automate the process of adding `.torrent` files to Transmission and organizing the downloads into a specified base directory, preserving the folder structure.
 
-		chmod +x startup.sh
+## Requirements
 
-You'll need to run this script on startup of your server - how you do that will depend on what OS your server is running. Google is your best friend.
+- Python 3.10+
+- `systemd` if using provided method of autostart
 
-#### Configuration
-Edit `main.py` with your favorite text editor and find the variable definitions which are currently empty strings (`''`). Set this string to the absolute path of the directory in question. The `watch_` section contains the directories to be watched for new torrent files. The `download_dir_` section is where transmission will be told to download the files.
+## Installation
 
-In the definition for the `transmissionrpc` client immediately following the path configuration variables, configure as needed - you can likely leave the port alone, but make sure you add the username and password that you use to log into Transmission RPC already.
+> *Note*: It's adviced to run this script as the same user as transmission-daemon.
+This way the majority of settings will be picked up automatically.
 
-If you'd like to change the time between directory scans, change the `time.sleep()` parameter at the very end of the script to some other number, in seconds.
+1. **Clone the repository (or copy the script to your desired location):**
 
-Save the file. The script should now run without issues.
+    ```sh
+    git clone <repository-url>
+    cd <project-directory>
+    ```
 
-#### Adding Or Removing Directories
-Because this is a pretty quick-and-dirty solution, you'll need to add or remove lines from the script to get the directories how you want them. To add another watch directory, you'll need to add a few things:
+2. **Create a virtual environment:**
 
-* The relevant `watch_` and `download_dir_` variables
-* The logging print calls (assuming you want the new directory to be logged too)
-* A line near the very end which adds the directories to the list, like:
+    ```sh
+    python3 -m venv ~/.transmission-dir-watcher-env
+    source ~/.transmission-dir-watcher-env/bin/activate
+    ```
 
-		add(watch_other, download_dir_other)
+3. **Install the required packages:**
 
-Removing directories instead, is clearly the exact opposite process.
+    ```sh
+    pip install . --force-reinstall
+    ```
 
-#### Other Notes
-Tested on Ubuntu Server 16.04 LTS.
+4. **Create a systemd user unit file:**
+
+    Replace `your_password`, `/path/to/watch/folder`, and `/path/to/base/download/dir` with your desired locations.
+
+    ```ini
+    [Unit]
+    Description=Watch directory for torrent files and add to Transmission
+    After=network-online.target
+    Wants=network-online.target
+
+    [Service]
+    Type=simple
+    Environment=TRANSMISSION_RPC_PASSWORD=your_password
+    ExecStart=%h/.transmission-dir-watcher-env/bin/transmission-dir-watcher --watch-dir /path/to/watch/folder --download-basedir /path/to/base/download/dir
+    Restart=on-failure
+
+    [Install]
+    WantedBy=default.target
+    ```
+
+    Save the above content in `~/.config/systemd/user/transmission-dir-watcher.service`.
+
+torrent-watcher --watch-dir ~/mnt/gdrive-torrents/ --download-basedir /media/data/
+
+5. **Reload systemd and start the service:**
+
+    ```sh
+    systemctl --user daemon-reload
+    systemctl --user enable --now transmission-dir-watcher.service
+    ```
+
+## Configuration
+
+1. **Transmission Settings:**
+
+    By default the script sources Transmission settings from `~/.config/transmission-daemon/settings.json`. Ensure this file contains the correct settings for `rpc-bind-address`, `rpc-port`, and `rpc-username`.
+
+    You can override the settings file location with `--transmission-settings-path` cli argument.
+
+2. **Environment Variable:**
+
+    Set the `TRANSMISSION_RPC_PASSWORD` environment variable to your Transmission RPC password:
+
+    ```sh
+    export TRANSMISSION_RPC_PASSWORD=your_password
+    ```
+
+## Usage
+
+Run the script with the following command (assuming you still have the python virtual environment active):
+
+```sh
+transmission-dir-watcher --watch-dir /path/to/watch/folder --download-basedir /path/to/base/download/dir
+```
+
+## Additional arguments
+
+By default the script scans the directory every 5 seconds. This can be chaned by settings desired number of seconds in the `--poll-interval` argument.
