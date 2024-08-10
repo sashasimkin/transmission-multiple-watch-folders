@@ -2,7 +2,7 @@
 
 This script watches a specified directory for new `.torrent` files and adds them to Transmission for downloading. The download directory is determined based on the folder structure of the watched directory.
 
-This means that when you use this script to watch directory `./torrents` which has the following structure:
+This means that when you use this script to watch the directory `./torrents` which has the following structure:
 ```
 - torrents/
   - Movies/
@@ -16,8 +16,8 @@ When you upload a `.torrent` file to `./torrents/Movies/` - the script will add 
 When you upload a `.torrent` file to `./torrents/TVShows/Anime/` - the script will add it to transmission to download to `/media/TVShows/Anime/`.
 When you upload a `.torrent` file to `./torrents` - the script will add it to transmission to download to `/media/`.
 
-When script successfully adds a `.torrent` file to transmission, it'll delete it from the `--watch-dir` directory.
-If adding fails for 5 times, the file will be renamed to `{name}.failed` and additional `{name}.traceback` will be created with last error.
+When the script successfully adds a `.torrent` file to transmission, it'll delete it from the `--watch-dir` directory.
+If adding fails 5 times, the file will be renamed to `{name}.failed` and an additional `{name}.traceback` will be created with the last error.
 
 ## Purpose
 
@@ -26,11 +26,11 @@ The purpose of this script is to automate the process of adding `.torrent` files
 ## Requirements
 
 - Python 3.10+
-- `systemd` if using provided method of autostart
+- `systemd` if using the provided method of autostart
 
 ## Installation
 
-> *Note*: It's adviced to run this script as the same user as transmission-daemon.
+> *Note*: It's advised to run this script as the same user as transmission-daemon.
 This way the majority of settings will be picked up automatically.
 
 1. **Clone the repository (or copy the script to your desired location):**
@@ -82,17 +82,20 @@ torrent-watcher --watch-dir ~/mnt/gdrive-torrents/ --download-basedir /media/dat
     ```sh
     systemctl --user daemon-reload
     systemctl --user enable --now transmission-dir-watcher.service
+    # Make the service start at boot and keep running irrespective of current user login
+    loginctl enable-linger
     ```
 
 ## Configuration
 
 1. **Transmission Settings:**
 
-    By default the script sources Transmission settings from `~/.config/transmission-daemon/settings.json`. Ensure this file contains the correct settings for `rpc-bind-address`, `rpc-port`, and `rpc-username`.
+    By default, the script sources Transmission settings from `~/.config/transmission-daemon/settings.json`.
+    Ensure this file contains the correct settings for `rpc-bind-address`, `rpc-port`, and `rpc-username`.
 
     You can override the settings file location with `--transmission-settings-path` cli argument.
 
-2. **Environment Variable:**
+3. **Environment Variable:**
 
     Set the `TRANSMISSION_RPC_PASSWORD` environment variable to your Transmission RPC password:
 
@@ -100,7 +103,7 @@ torrent-watcher --watch-dir ~/mnt/gdrive-torrents/ --download-basedir /media/dat
     export TRANSMISSION_RPC_PASSWORD=your_password
     ```
 
-## Usage
+## CLI Usage
 
 Run the script with the following command (assuming you still have the python virtual environment active):
 
@@ -110,4 +113,4 @@ transmission-dir-watcher --watch-dir /path/to/watch/folder --download-basedir /p
 
 ## Additional arguments
 
-By default the script scans the directory every 5 seconds. This can be chaned by settings desired number of seconds in the `--poll-interval` argument.
+By default, the script scans the directory every 5 seconds. This can be changed by setting the desired number of seconds in the `--poll-interval` argument.
